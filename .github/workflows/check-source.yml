@@ -1,0 +1,43 @@
+
+name: Check XZ1 kernel source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          ref: lineage-21
+
+      - name: Check G8341 defconfig
+        shell: bash
+        run: |
+          set -eu
+
+          echo "Checking kernel source..."
+          test -f Makefile
+
+          CONFIG="lineage-msm8998-yoshino-poplar_defconfig"
+          CONFIG_PATH="arch/arm64/configs/$CONFIG"
+
+          if [ ! -f "$CONFIG_PATH" ]; then
+            echo "ERROR: Missing config: $CONFIG_PATH"
+            echo "Available related configs:"
+            find arch/arm64/configs -maxdepth 1 \
+              -type f -iname '*yoshino*' -print || true
+            exit 1
+          fi
+
+          echo "Found config: $CONFIG_PATH"
+          echo "Kernel Makefile version:"
+          head -n 5 Makefile
+
+          echo "Source check completed."
+          
