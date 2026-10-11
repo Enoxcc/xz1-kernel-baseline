@@ -1,5 +1,4 @@
-
-name: Inspect XZ1 kernel build setup
+name: Inspect XZ1 kernel compiler config
 
 on:
   workflow_dispatch:
@@ -16,32 +15,26 @@ jobs:
         with:
           ref: lineage-21
 
-      - name: Inspect build requirements
+      - name: Inspect compiler configuration
         shell: bash
         run: |
           set -eu
 
-          echo "=== Kernel version ==="
-          head -n 5 Makefile
+          CONFIG="arch/arm64/configs/lineage-msm8998-yoshino-poplar_defconfig"
 
-          echo "=== Compiler references ==="
-          grep -RInE \
-            'CROSS_COMPILE|CLANG_TRIPLE|LLVM|clang|gcc' \
-            Makefile arch/arm64 scripts \
-            --include='Makefile' \
-            --include='*.mk' \
-            --include='*.sh' \
-            | head -n 100 || true
+          echo "=== Compiler settings in XZ1 defconfig ==="
+          grep -nE \
+            'CONFIG_(CROSS_COMPILE|CROSS_COMPILE_ARM32|CC_VERSION_TEXT|CLANG_VERSION|LLVM)' \
+            "$CONFIG" || true
 
-          echo "=== Build scripts ==="
-          find . -maxdepth 3 -type f \
-            \( -iname '*build*.sh' \
-            -o -iname '*compile*.sh' \
-            -o -iname '*README*' \) \
-            -print | head -n 100
+          echo "=== README build guidance ==="
+          sed -n '1,180p' README
 
-          echo "=== Defconfig check ==="
-          test -f \
-            arch/arm64/configs/lineage-msm8998-yoshino-poplar_defconfig
-          echo "XZ1 defconfig exists."
+          echo "=== Architecture toolchain requirements ==="
+          sed -n '45,100p' arch/arm64/Makefile
+
+          echo "=== Compiler scripts ==="
+          ls -l scripts/clang-version.sh scripts/gcc-version.sh
+
+          echo "Inspection completed."
           
