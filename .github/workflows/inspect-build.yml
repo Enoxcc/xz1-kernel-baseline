@@ -1,4 +1,4 @@
-name: Inspect XZ1 kernel compiler config
+name: Inspect XZ1 VDSO config
 
 on:
   workflow_dispatch:
@@ -10,31 +10,26 @@ jobs:
   inspect:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout kernel source
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: lineage-21
 
-      - name: Inspect compiler configuration
+      - name: Check compatibility settings
         shell: bash
         run: |
           set -eu
 
           CONFIG="arch/arm64/configs/lineage-msm8998-yoshino-poplar_defconfig"
 
-          echo "=== Compiler settings in XZ1 defconfig ==="
+          echo "=== ARM64 compatibility config ==="
           grep -nE \
-            'CONFIG_(CROSS_COMPILE|CROSS_COMPILE_ARM32|CC_VERSION_TEXT|CLANG_VERSION|LLVM)' \
+            'CONFIG_(COMPAT|COMPAT_VDSO|ARM64|ARM64_LSE_ATOMICS)' \
             "$CONFIG" || true
 
-          echo "=== README build guidance ==="
-          sed -n '1,180p' README
-
-          echo "=== Architecture toolchain requirements ==="
-          sed -n '45,100p' arch/arm64/Makefile
-
-          echo "=== Compiler scripts ==="
-          ls -l scripts/clang-version.sh scripts/gcc-version.sh
+          echo "=== Toolchain-related config ==="
+          grep -nE \
+            'CONFIG_(CROSS_COMPILE|CROSS_COMPILE_ARM32|CC_IS_CLANG|GCC_VERSION|CLANG_VERSION)' \
+            "$CONFIG" || true
 
           echo "Inspection completed."
           
