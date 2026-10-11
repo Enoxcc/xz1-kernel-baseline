@@ -1,0 +1,47 @@
+
+name: Inspect XZ1 kernel build setup
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout kernel source
+        uses: actions/checkout@v4
+        with:
+          ref: lineage-21
+
+      - name: Inspect build requirements
+        shell: bash
+        run: |
+          set -eu
+
+          echo "=== Kernel version ==="
+          head -n 5 Makefile
+
+          echo "=== Compiler references ==="
+          grep -RInE \
+            'CROSS_COMPILE|CLANG_TRIPLE|LLVM|clang|gcc' \
+            Makefile arch/arm64 scripts \
+            --include='Makefile' \
+            --include='*.mk' \
+            --include='*.sh' \
+            | head -n 100 || true
+
+          echo "=== Build scripts ==="
+          find . -maxdepth 3 -type f \
+            \( -iname '*build*.sh' \
+            -o -iname '*compile*.sh' \
+            -o -iname '*README*' \) \
+            -print | head -n 100
+
+          echo "=== Defconfig check ==="
+          test -f \
+            arch/arm64/configs/lineage-msm8998-yoshino-poplar_defconfig
+          echo "XZ1 defconfig exists."
+          
